@@ -151,7 +151,8 @@ MIT License
 
 ## Contributors
 
-- Your Name - Initial work and development
+- Arpita Badiger - Lead Developer
+
 
 ## Acknowledgments
 
