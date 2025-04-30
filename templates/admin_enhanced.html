@@ -1,0 +1,551 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* Admin page specific styles */
+    .admin-container {
+        max-width: 1280px;
+        margin: 0 auto;
+        padding: 2rem 1rem;
+    }
+    
+    .admin-header {
+        text-align: center;
+        margin-bottom: 2.5rem;
+        position: relative;
+    }
+    
+    .admin-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--primary-color);
+        margin-bottom: 0.5rem;
+        background: linear-gradient(to right, #3b82f6, #4f46e5);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    
+    .admin-subtitle {
+        font-size: 1.1rem;
+        color: #6b7280;
+        max-width: 600px;
+        margin: 0 auto;
+    }
+    
+    .admin-icon {
+        width: 80px;
+        height: 80px;
+        margin: 0 auto 1.5rem;
+        color: #4f46e5;
+        animation: float 6s ease-in-out infinite;
+    }
+    
+    .admin-stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2.5rem;
+    }
+    
+    .admin-stat-card {
+        background-color: white;
+        border-radius: 1rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        overflow: hidden;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        padding: 1.5rem;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .dark .admin-stat-card {
+        background-color: #1f2937;
+    }
+    
+    .admin-stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    }
+    
+    .admin-stat-card-blue {
+        border-top: 4px solid #3b82f6;
+    }
+    
+    .admin-stat-card-green {
+        border-top: 4px solid #10b981;
+    }
+    
+    .admin-stat-card-purple {
+        border-top: 4px solid #8b5cf6;
+    }
+    
+    .admin-stat-card-red {
+        border-top: 4px solid #ef4444;
+    }
+    
+    .admin-stat-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+    
+    .admin-stat-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 1rem;
+    }
+    
+    .admin-stat-icon-blue {
+        background: linear-gradient(to right, #3b82f6, #2563eb);
+        color: white;
+    }
+    
+    .admin-stat-icon-green {
+        background: linear-gradient(to right, #10b981, #059669);
+        color: white;
+    }
+    
+    .admin-stat-icon-purple {
+        background: linear-gradient(to right, #8b5cf6, #7c3aed);
+        color: white;
+    }
+    
+    .admin-stat-icon-red {
+        background: linear-gradient(to right, #ef4444, #dc2626);
+        color: white;
+    }
+    
+    .admin-stat-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #4b5563;
+    }
+    
+    .dark .admin-stat-title {
+        color: #e5e7eb;
+    }
+    
+    .admin-stat-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-top: 0.5rem;
+    }
+    
+    .admin-stat-value-blue {
+        color: #3b82f6;
+    }
+    
+    .dark .admin-stat-value-blue {
+        color: #60a5fa;
+    }
+    
+    .admin-stat-value-green {
+        color: #10b981;
+    }
+    
+    .dark .admin-stat-value-green {
+        color: #34d399;
+    }
+    
+    .admin-stat-value-purple {
+        color: #8b5cf6;
+    }
+    
+    .dark .admin-stat-value-purple {
+        color: #a78bfa;
+    }
+    
+    .admin-stat-value-red {
+        color: #ef4444;
+    }
+    
+    .dark .admin-stat-value-red {
+        color: #f87171;
+    }
+    
+    .admin-stat-description {
+        font-size: 0.875rem;
+        color: #6b7280;
+        margin-top: 0.5rem;
+    }
+    
+    .dark .admin-stat-description {
+        color: #9ca3af;
+    }
+    
+    .admin-card {
+        background-color: white;
+        border-radius: 1rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        overflow: hidden;
+        margin-bottom: 2.5rem;
+    }
+    
+    .dark .admin-card {
+        background-color: #1f2937;
+    }
+    
+    .admin-card-header {
+        padding: 1.5rem;
+        border-bottom: 1px solid #e5e7eb;
+        display: flex;
+        align-items: center;
+    }
+    
+    .dark .admin-card-header {
+        border-bottom: 1px solid #374151;
+    }
+    
+    .admin-card-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: linear-gradient(to right, #3b82f6, #4f46e5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 1rem;
+    }
+    
+    .admin-card-icon svg {
+        width: 20px;
+        height: 20px;
+        color: white;
+    }
+    
+    .admin-card-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #111827;
+    }
+    
+    .dark .admin-card-title {
+        color: #f9fafb;
+    }
+    
+    .admin-card-body {
+        padding: 1.5rem;
+    }
+    
+    .admin-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+    
+    .admin-table th {
+        background-color: #f3f4f6;
+        color: #4b5563;
+        font-weight: 600;
+        text-align: left;
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid #e5e7eb;
+    }
+    
+    .dark .admin-table th {
+        background-color: #374151;
+        color: #e5e7eb;
+        border-bottom: 1px solid #4b5563;
+    }
+    
+    .admin-table th:first-child {
+        border-top-left-radius: 0.5rem;
+    }
+    
+    .admin-table th:last-child {
+        border-top-right-radius: 0.5rem;
+    }
+    
+    .admin-table td {
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid #e5e7eb;
+        color: #1f2937;
+    }
+    
+    .dark .admin-table td {
+        border-bottom: 1px solid #374151;
+        color: #f9fafb;
+    }
+    
+    .admin-table tr:last-child td {
+        border-bottom: none;
+    }
+    
+    .admin-table tr:last-child td:first-child {
+        border-bottom-left-radius: 0.5rem;
+    }
+    
+    .admin-table tr:last-child td:last-child {
+        border-bottom-right-radius: 0.5rem;
+    }
+    
+    .admin-table tr:hover td {
+        background-color: #f9fafb;
+    }
+    
+    .dark .admin-table tr:hover td {
+        background-color: #1f2937;
+    }
+    
+    .admin-table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .admin-badge {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+    
+    .admin-badge-blue {
+        background-color: #dbeafe;
+        color: #1e40af;
+    }
+    
+    .dark .admin-badge-blue {
+        background-color: #1e40af;
+        color: #dbeafe;
+    }
+    
+    .admin-badge-green {
+        background-color: #d1fae5;
+        color: #065f46;
+    }
+    
+    .dark .admin-badge-green {
+        background-color: #065f46;
+        color: #d1fae5;
+    }
+    
+    .admin-badge-red {
+        background-color: #fee2e2;
+        color: #b91c1c;
+    }
+    
+    .dark .admin-badge-red {
+        background-color: #b91c1c;
+        color: #fee2e2;
+    }
+    
+    .admin-badge-yellow {
+        background-color: #fef3c7;
+        color: #92400e;
+    }
+    
+    .dark .admin-badge-yellow {
+        background-color: #92400e;
+        color: #fef3c7;
+    }
+    
+    .admin-button {
+        display: inline-block;
+        padding: 0.5rem 1rem;
+        border-radius: 0.375rem;
+        font-size: 0.875rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background-color 0.3s ease, transform 0.3s ease;
+    }
+    
+    .admin-button:hover {
+        transform: translateY(-2px);
+    }
+    
+    .admin-button-red {
+        color: #ef4444;
+    }
+    
+    .admin-button-red:hover {
+        background-color: #fee2e2;
+    }
+    
+    .dark .admin-button-red:hover {
+        background-color: #7f1d1d;
+    }
+    
+    .admin-button-blue {
+        color: #3b82f6;
+    }
+    
+    .admin-button-blue:hover {
+        background-color: #dbeafe;
+    }
+    
+    .dark .admin-button-blue:hover {
+        background-color: #1e3a8a;
+    }
+    
+    /* Animation for floating elements */
+    @keyframes float {
+        0% { transform: translateY(0px); }
+        50% { transform: translateY(-10px); }
+        100% { transform: translateY(0px); }
+    }
+    
+    .animate-float {
+        animation: float 6s ease-in-out infinite;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-container">
+    <div class="admin-header">
+        <div class="admin-icon animate-float">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+        </div>
+        <h1 class="admin-title">Admin Dashboard</h1>
+        <p class="admin-subtitle">Manage users and monitor system performance</p>
+    </div>
+    
+    <!-- System Statistics -->
+    <div class="admin-stats-grid">
+        <div class="admin-stat-card admin-stat-card-blue">
+            <div class="admin-stat-header">
+                <div class="admin-stat-icon admin-stat-icon-blue">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                </div>
+                <div class="admin-stat-title">Total Users</div>
+            </div>
+            <div class="admin-stat-value admin-stat-value-blue">{{ user_count }}</div>
+            <div class="admin-stat-description">Registered accounts in the system</div>
+        </div>
+        
+        <div class="admin-stat-card admin-stat-card-green">
+            <div class="admin-stat-header">
+                <div class="admin-stat-icon admin-stat-icon-green">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                    </svg>
+                </div>
+                <div class="admin-stat-title">Total Flights</div>
+            </div>
+            <div class="admin-stat-value admin-stat-value-green">{{ flight_count }}</div>
+            <div class="admin-stat-description">Flights tracked in the database</div>
+        </div>
+        
+        <div class="admin-stat-card admin-stat-card-purple">
+            <div class="admin-stat-header">
+                <div class="admin-stat-icon admin-stat-icon-purple">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                </div>
+                <div class="admin-stat-title">Congested Routes</div>
+            </div>
+            <div class="admin-stat-value admin-stat-value-purple">{{ congested_count }}</div>
+            <div class="admin-stat-description">Routes requiring attention</div>
+        </div>
+        
+        <div class="admin-stat-card admin-stat-card-red">
+            <div class="admin-stat-header">
+                <div class="admin-stat-icon admin-stat-icon-red">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+                <div class="admin-stat-title">System Alerts</div>
+            </div>
+            <div class="admin-stat-value admin-stat-value-red">0</div>
+            <div class="admin-stat-description">Active system alerts</div>
+        </div>
+    </div>
+    
+    <!-- User Management -->
+    <div class="admin-card">
+        <div class="admin-card-header">
+            <div class="admin-card-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+            </div>
+            <h2 class="admin-card-title">User Management</h2>
+        </div>
+        <div class="admin-card-body">
+            <div class="admin-table-responsive">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Created At</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users %}
+                        <tr>
+                            <td>{{ user.id }}</td>
+                            <td>
+                                <div style="display: flex; align-items: center;">
+                                    <div style="width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(to right, #3b82f6, #4f46e5); color: white; display: flex; align-items: center; justify-content: center; margin-right: 10px; font-weight: bold;">
+                                        {{ user.name[0] | upper }}
+                                    </div>
+                                    {{ user.name }}
+                                </div>
+                            </td>
+                            <td>{{ user.email }}</td>
+                            <td>{{ user.created_at }}</td>
+                            <td>
+                                {% if user.id == 1 %}
+                                    <span class="admin-badge admin-badge-yellow">Admin</span>
+                                {% else %}
+                                    <span class="admin-badge admin-badge-blue">Active</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div style="display: flex; gap: 10px;">
+                                    <form method="POST" action="{{ url_for('delete_user', user_id=user.id) }}" 
+                                          onsubmit="return confirm('Are you sure you want to delete this user?');">
+                                        <button type="submit" class="admin-button admin-button-red">Delete</button>
+                                    </form>
+                                    <a href="#" class="admin-button admin-button-blue">Edit</a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <!-- System Performance -->
+    <div class="admin-card">
+        <div class="admin-card-header">
+            <div class="admin-card-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+            </div>
+            <h2 class="admin-card-title">System Performance</h2>
+        </div>
+        <div class="admin-card-body">
+            <div style="height: 300px; display: flex; align-items: center; justify-content: center;">
+                <div style="text-align: center; color: #6b7280;">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 48px; height: 48px; margin: 0 auto 16px;">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                    <p style="font-size: 18px; font-weight: 500; margin-bottom: 8px;">Performance Metrics</p>
+                    <p>System performance data will be displayed here</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

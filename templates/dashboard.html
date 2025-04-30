@@ -1,0 +1,1190 @@
+{% extends "base.html" %}
+
+{% block title %}AI-Powered Air Traffic Dashboard{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* Custom scrollbar styling */
+    ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+    
+    ::-webkit-scrollbar-track {
+        background-color: #f3f4f6;
+        border-radius: 10px;
+    }
+    
+    .dark ::-webkit-scrollbar-track {
+        background-color: #1f2937;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+        background-color: #0565ff;
+        border-radius: 10px;
+        background-image: linear-gradient(to bottom, #0a67fd, #4f46e5);
+    }
+    
+    .dark ::-webkit-scrollbar-thumb {
+        background-color: #060606;
+    }
+    
+    /* Animation for floating plane icon */
+    @keyframes float {
+        0% { transform: translateY(0px); }
+        50% { transform: translateY(-15px); }
+        100% { transform: translateY(0px); }
+    }
+    
+    .animate-float {
+        animation: float 6s ease-in-out infinite;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <!-- Header Section with Animation -->
+    <div class="dashboard-header">
+        <h1 class="dashboard-title">AI-Powered Air Traffic Dashboard</h1>
+        <p class="dashboard-subtitle">Real-time congestion prediction and route optimization powered by advanced machine learning</p>
+        
+        <!-- Animated Plane Icon -->
+        <div class="animated-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                <path d="M22.5 2.5L16.5 8.5M16.5 8.5L20.5 20.5L16.5 16.5L12.5 20.5L14.5 12.5L2.5 4.5L16.5 8.5Z" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </div>
+    </div>
+
+    <!-- Stats Overview -->
+    <div class="stats-grid">
+        <!-- Total Flights Card -->
+        <div class="stat-card stat-card-blue">
+            <div class="stat-card-header"></div>
+            <div class="stat-card-content">
+                <div class="stat-info">
+                    <h3>Total Flights</h3>
+                    <p class="stat-value">{{ flights|length }}</p>
+                    <p class="stat-description">Active flights in the system</p>
+                </div>
+                <div class="stat-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Congested Routes Card -->
+        <div class="stat-card stat-card-red">
+            <div class="stat-card-header"></div>
+            <div class="stat-card-content">
+                <div class="stat-info">
+                    <h3>Congested Routes</h3>
+                    <p class="stat-value">{{ flights|selectattr('congestion', 'equalto', 'Congested')|list|length }}</p>
+                    <p class="stat-description">Routes requiring attention</p>
+                </div>
+                <div class="stat-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Airlines Card -->
+        <div class="stat-card stat-card-green">
+            <div class="stat-card-header"></div>
+            <div class="stat-card-content">
+                <div class="stat-info">
+                    <h3>Airlines</h3>
+                    <p class="stat-value">{{ airlines|length }}</p>
+                    <p class="stat-description">Operating carriers</p>
+                </div>
+                <div class="stat-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                    </svg>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Prediction Form -->
+    <div class="card">
+        <div class="card-header card-header-blue">
+            <div class="card-header-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+            </div>
+            <div class="card-header-title">
+                <h2>Predict Route Congestion</h2>
+                <p>Use AI to analyze and predict potential congestion on your route</p>
+            </div>
+        </div>
+        
+        <div class="card-body">
+            <form id="predict-form" class="form-grid">
+                <div class="form-group">
+                    <label for="airline">Airline</label>
+                    <select name="airline" id="airline" class="form-control" required>
+                        <option value="">Select Airline</option>
+                        {% for airline in airlines %}
+                        <option value="{{ airline }}">{{ airline }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="origin">Origin Airport</label>
+                    <select name="origin" id="origin" class="form-control" required>
+                        <option value="">Select Origin</option>
+                        {% for airport in airports %}
+                        <option value="{{ airport }}">{{ airport }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="destination">Destination Airport</label>
+                    <select name="destination" id="destination" class="form-control" required>
+                        <option value="">Select Destination</option>
+                        {% for airport in airports %}
+                        <option value="{{ airport }}">{{ airport }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>&nbsp;</label>
+                    <button type="submit" class="btn btn-primary">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="display: inline-block; margin-right: 8px; vertical-align: text-bottom;">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                        Predict Congestion
+                    </button>
+                </div>
+            </form>
+            
+            <div id="prediction-result" style="display: none; margin-top: 20px; padding: 15px; background-color: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px;">
+                <!-- Prediction results will appear here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Visualizations -->
+    <div class="stats-grid">
+        <div class="card">
+            <div class="card-header card-header-purple">
+                <div class="card-header-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                </div>
+                <div class="card-header-title">
+                    <h2>Congestion by Airport</h2>
+                    <p>Distribution of congestion levels across airports</p>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="congestionChart" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header card-header-blue">
+                <div class="card-header-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                    </svg>
+                </div>
+                <div class="card-header-title">
+                    <h2>Average Delay by Month</h2>
+                    <p>Monthly trend analysis of flight delays</p>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="delayChart" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters and Export -->
+    <div class="card">
+        <div class="card-header">
+            <div class="card-header-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                </svg>
+            </div>
+            <div class="card-header-title">
+                <h2>Filter Data</h2>
+            </div>
+            <a href="/export" class="btn btn-secondary" style="margin-left: auto;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="display: inline-block; margin-right: 8px; vertical-align: text-bottom;">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                Export to CSV
+            </a>
+        </div>
+        
+        <div class="card-body">
+            <div class="filter-section">
+                <div class="filter-input">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    <input id="filter-airline" type="text" placeholder="Filter by Airline">
+                </div>
+                <div class="filter-input">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    <input id="filter-origin" type="text" placeholder="Filter by Origin">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Flight Table -->
+    <div class="card">
+        <div class="card-header card-header-purple">
+            <div class="card-header-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+            </div>
+            <div class="card-header-title">
+                <h2>Flight Data</h2>
+                <p>Comprehensive view of all flights with real-time status</p>
+            </div>
+            <div id="flight-counter" style="margin-left: auto; background-color: rgba(79, 70, 229, 0.2); padding: 5px 12px; border-radius: 20px; font-size: 0.875rem;">
+                <span style="font-weight: 500;">{{ flights|length }}</span> flights
+            </div>
+        </div>
+        
+        <div class="card-body">
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Flight Number</th>
+                            <th>Airline</th>
+                            <th>Origin</th>
+                            <th>Destination</th>
+                            <th>Delay (min)</th>
+                            <th>Cancelled</th>
+                            <th>Delay Reason</th>
+                            <th>Congestion</th>
+                            <th>Route Suggestion</th>
+                        </tr>
+                    </thead>
+                    <tbody id="flight-table">
+                        {% for flight in flights %}
+                        <tr>
+                            <td style="font-weight: 500;">{{ flight.flight_number }}</td>
+                            <td>
+                                <div style="display: flex; align-items: center;">
+                                    <div style="width: 8px; height: 8px; border-radius: 50%; background-color: #3b82f6; margin-right: 8px;"></div>
+                                    {{ flight.airline }}
+                                </div>
+                            </td>
+                            <td>{{ flight.origin }}</td>
+                            <td>{{ flight.destination }}</td>
+                            <td>
+                                {% if flight.delay_minutes > 30 %}
+                                    <span style="color: #dc2626; font-weight: 500;">{{ flight.delay_minutes }}</span>
+                                {% elif flight.delay_minutes > 15 %}
+                                    <span style="color: #d97706; font-weight: 500;">{{ flight.delay_minutes }}</span>
+                                {% else %}
+                                    <span>{{ flight.delay_minutes }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if flight.cancelled %}
+                                    <span class="status-badge status-badge-red">Yes</span>
+                                {% else %}
+                                    <span class="status-badge status-badge-green">No</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ flight.delay_reason }}</td>
+                            <td>
+                                {% if flight.congestion == 'Congested' %}
+                                    <span class="status-badge status-badge-red">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="margin-right: 4px;">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                        </svg>
+                                        {{ flight.congestion }}
+                                    </span>
+                                {% elif flight.congestion == 'Potentially Congested' %}
+                                    <span class="status-badge status-badge-yellow">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="margin-right: 4px;">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                        </svg>
+                                        {{ flight.congestion }}
+                                    </span>
+                                {% else %}
+                                    <span class="status-badge status-badge-green">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="margin-right: 4px;">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                        {{ flight.congestion }}
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if flight.route_suggestion %}
+                                    <span style="color: #2563eb; font-weight: 500;">{{ flight.route_suggestion }}</span>
+                                {% else %}
+                                    <span style="color: #9ca3af;">-</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block scripts %}
+<script>
+    // Enhanced Table sorting with visual indicators
+    $('th').click(function() {
+        const table = $(this).parents('table').eq(0);
+        const rows = table.find('tr:gt(0)').toArray().sort(comparer($(this).index()));
+        
+        // Remove existing sort indicators
+        $('th').find('.sort-indicator').remove();
+        
+        // Add sort indicator to current column
+        this.asc = !this.asc;
+        const sortIcon = this.asc ? 
+            '<svg xmlns="http://www.w3.org/2000/svg" class="sort-indicator h-4 w-4 ml-1 inline-block" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" /></svg>' : 
+            '<svg xmlns="http://www.w3.org/2000/svg" class="sort-indicator h-4 w-4 ml-1 inline-block" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>';
+        
+        $(this).append(sortIcon);
+        
+        if (!this.asc) rows.reverse();
+        
+        // Apply smooth transition for row reordering
+        for (let i = 0; i < rows.length; i++) {
+            $(rows[i]).css('transition', 'background-color 0.3s ease');
+            $(rows[i]).css('background-color', 'rgba(59, 130, 246, 0.1)');
+            table.append(rows[i]);
+            setTimeout(function() {
+                $(rows[i]).css('background-color', '');
+            }, 500);
+        }
+    });
+
+    function comparer(index) {
+        return function(a, b) {
+            const valA = getCellValue(a, index), valB = getCellValue(b, index);
+            return $.isNumeric(valA) && $.isNumeric(valB) ? valA - valB : valA.toString().localeCompare(valB);
+        };
+    }
+
+    function getCellValue(row, index) {
+        return $(row).children('td').eq(index).text().trim();
+    }
+
+    // Enhanced Table filtering with debounce
+    function debounce(func, wait) {
+        let timeout;
+        return function() {
+            const context = this, args = arguments;
+            clearTimeout(timeout);
+            timeout = setTimeout(function() {
+                func.apply(context, args);
+            }, wait);
+        };
+    }
+
+    const performFilter = debounce(function() {
+        console.log("Filtering...");
+        const airline = $('#filter-airline').val().toLowerCase();
+        const origin = $('#filter-origin').val().toLowerCase();
+        let visibleCount = 0;
+        
+        // Select all rows in the table body
+        $('.data-table tbody tr').each(function() {
+            // Get the text content of the airline and origin cells
+            const rowAirline = $(this).find('td:eq(1)').text().toLowerCase();
+            const rowOrigin = $(this).find('td:eq(2)').text().toLowerCase();
+            
+            // Check if the row matches the filter criteria
+            if ((airline === '' || rowAirline.includes(airline)) &&
+                (origin === '' || rowOrigin.includes(origin))) {
+                $(this).show();
+                visibleCount++;
+            } else {
+                $(this).hide();
+            }
+        });
+        
+        // Update visible count in the flight counter
+        $('#flight-counter span').text(visibleCount);
+        console.log("Visible flights:", visibleCount);
+    }, 300);
+
+    $('#filter-airline, #filter-origin').on('keyup', performFilter);
+
+    // Enhanced Prediction form submission with better UX
+    $('#predict-form').submit(function(e) {
+        e.preventDefault();
+        
+        // Form validation
+        const airline = $('select[name="airline"]').val();
+        const origin = $('select[name="origin"]').val();
+        const destination = $('select[name="destination"]').val();
+        
+        if (!airline || !origin || !destination) {
+            $('#prediction-result').show().html(`
+                <div style="background-color: #fee2e2; padding: 16px; border-radius: 8px; text-align: center;">
+                    <svg xmlns="http://www.w3.org/2000/svg" style="width: 40px; height: 40px; margin: 0 auto 8px auto; color: #ef4444;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <p style="color: #b91c1c; font-weight: 500;">Please fill in all fields to get a prediction.</p>
+                </div>
+            `);
+            return;
+        }
+        
+        // Show loading state with animation
+        $('#prediction-result').show().html(`
+            <div style="text-align: center; padding: 20px;">
+                <div style="position: relative; display: inline-block; width: 48px; height: 48px;">
+                    <svg class="animate-spin" style="animation: spin 1s linear infinite; width: 48px; height: 48px;" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle style="opacity: 0.25;" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path style="opacity: 0.75;" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                </div>
+                <p style="margin-top: 16px; font-size: 18px;">Analyzing route congestion...</p>
+                <p style="margin-top: 8px; font-size: 14px; color: #6b7280;">Our AI is processing your request</p>
+            </div>
+        `);
+        
+        $.ajax({
+            url: '/predict',
+            type: 'POST',
+            data: $(this).serialize(),
+            success: function(data) {
+                // Format the result with enhanced styling
+                let congestionClass = data.congestion === 'Congested' ? 'text-red-600 dark:text-red-400' : 
+                                     (data.congestion === 'Potentially Congested' ? 'text-yellow-600 dark:text-yellow-400' : 
+                                     'text-green-600 dark:text-green-400');
+                
+                let congestionBg = data.congestion === 'Congested' ? 'bg-red-50 dark:bg-red-900/30' : 
+                                  (data.congestion === 'Potentially Congested' ? 'bg-yellow-50 dark:bg-yellow-900/30' : 
+                                  'bg-green-50 dark:bg-green-900/30');
+                
+                let congestionIcon = data.congestion === 'Congested' ? 
+                    `<svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-red-500 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>` : 
+                    (data.congestion === 'Potentially Congested' ? 
+                    `<svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-yellow-500 dark:text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>` : 
+                    `<svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-green-500 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>`);
+                
+                $('#prediction-result').html(`
+                    <div class="text-center">
+                        <h3 class="text-2xl font-bold mb-2">Route Analysis</h3>
+                        <p class="mb-6 text-gray-600 dark:text-gray-400">
+                            <span class="font-medium">${data.airline || airline}</span> flight from 
+                            <span class="font-medium">${data.origin || origin}</span> to 
+                            <span class="font-medium">${data.destination || destination}</span>
+                        </p>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                            <div class="p-6 ${congestionBg} rounded-xl shadow-sm">
+                                <div class="flex flex-col items-center">
+                                    ${congestionIcon}
+                                    <h4 class="font-semibold text-gray-700 dark:text-gray-300 mt-2">Congestion Status</h4>
+                                    <p class="text-xl ${congestionClass} font-bold mt-1">${data.congestion}</p>
+                                </div>
+                            </div>
+                            
+                            <div class="p-6 bg-blue-50 dark:bg-blue-900/30 rounded-xl shadow-sm">
+                                <div class="flex flex-col items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-500 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                                    </svg>
+                                    <h4 class="font-semibold text-gray-700 dark:text-gray-300 mt-2">AI Confidence</h4>
+                                    <p class="text-xl text-blue-600 dark:text-blue-400 font-bold mt-1">${data.confidence || '95'}%</p>
+                                </div>
+                            </div>
+                            
+                            <div class="p-6 bg-purple-50 dark:bg-purple-900/30 rounded-xl shadow-sm">
+                                <div class="flex flex-col items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-purple-500 dark:text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                                    </svg>
+                                    <h4 class="font-semibold text-gray-700 dark:text-gray-300 mt-2">Expected Delay</h4>
+                                    <p class="text-xl text-purple-600 dark:text-purple-400 font-bold mt-1">${data.expected_delay || '0'} min</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        ${data.route_suggestion ? `
+                            <div class="p-6 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl shadow-sm mb-6">
+                                <h4 class="font-semibold text-indigo-700 dark:text-indigo-300 flex items-center justify-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                                    </svg>
+                                    Recommended Route
+                                </h4>
+                                <p class="text-gray-700 dark:text-gray-300 mt-2">${data.route_suggestion}</p>
+                            </div>
+                        ` : ''}
+                    </div>
+                `);
+                
+                // Smooth scroll to results
+                $('html, body').animate({
+                    scrollTop: $('#prediction-result').offset().top - 100
+                }, 500);
+            },
+            error: function(xhr, status, error) {
+                console.error("AJAX Error:", status, error);
+                $('#prediction-result').html(`
+                    <div style="text-align: center; padding: 24px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" style="width: 48px; height: 48px; margin: 0 auto 16px auto; color: #ef4444;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <h3 style="font-size: 20px; font-weight: bold; color: #dc2626; margin-bottom: 8px;">Error Processing Request</h3>
+                        <p style="color: #4b5563;">We couldn't process your prediction at this time.</p>
+                        <button style="margin-top: 16px; background-color: #fee2e2; color: #b91c1c; padding: 8px 16px; border-radius: 8px; cursor: pointer;" onclick="$('#predict-form').submit();">Try Again</button>
+                    </div>
+                `);
+            }
+        });
+    });
+
+    // Enhanced Charts with better styling and animations
+    
+    // Sample data for charts (used only if real data is not available)
+    const sampleAirports = ['DEL', 'BOM', 'BLR', 'HYD', 'CCU', 'MAA'];
+    const sampleCongestionData = [65, 45, 30, 25, 40, 20];
+    const sampleMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
+    const sampleDelayData = [15, 20, 25, 18, 12, 22];
+
+    // Chart.js configuration based on theme
+    
+    // Check if dark mode is active
+    const isDarkMode = document.documentElement.classList.contains('dark');
+    
+    // Set chart colors based on theme
+    const textColor = isDarkMode ? '#e5e7eb' : '#374151';
+    const gridColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+    
+    // Chart.js global defaults
+    Chart.defaults.font.family = "'Inter', 'Helvetica', 'Arial', sans-serif";
+    Chart.defaults.color = textColor;
+    Chart.defaults.borderColor = gridColor;
+    
+    // Visualizations data from server
+    // Use try-catch to handle potential JSON parsing errors
+    let vizData;
+    try {
+        vizData = JSON.parse('{{ viz_data | tojson | safe }}');
+    } catch (e) {
+        console.error("Error parsing visualization data:", e);
+        // Provide fallback data if parsing fails
+        vizData = {
+            congestion_by_airport: Object.fromEntries(sampleAirports.map((airport, i) => [airport, sampleCongestionData[i]/100])),
+            delay_by_month: Object.fromEntries(sampleMonths.map((month, i) => [month, sampleDelayData[i]]))
+        };
+    }
+    
+    // Create gradient for congestion chart
+    let congestionCtx, congestionGradient, congestionChart;
+    
+    try {
+        const congestionChartElement = document.getElementById('congestionChart');
+        if (!congestionChartElement) {
+            console.error("Congestion chart element not found");
+            throw new Error("Congestion chart element not found");
+        }
+        
+        congestionCtx = congestionChartElement.getContext('2d');
+        congestionGradient = congestionCtx.createLinearGradient(0, 0, 0, 400);
+        congestionGradient.addColorStop(0, isDarkMode ? 'rgba(59, 130, 246, 0.8)' : 'rgba(59, 130, 246, 0.7)');
+        congestionGradient.addColorStop(1, isDarkMode ? 'rgba(79, 70, 229, 0.2)' : 'rgba(59, 130, 246, 0.1)');
+        
+        congestionChart = new Chart(congestionCtx, {
+        type: 'bar',
+        data: {
+            labels: Object.keys(vizData.congestion_by_airport) || sampleAirports,
+            datasets: [{
+                label: 'Congestion Probability',
+                data: Object.values(vizData.congestion_by_airport) || sampleCongestionData,
+                backgroundColor: congestionGradient,
+                borderWidth: 0,
+                borderRadius: 6,
+                hoverBackgroundColor: isDarkMode ? 'rgba(96, 165, 250, 0.9)' : 'rgba(37, 99, 235, 0.8)',
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    labels: {
+                        font: {
+                            family: 'Inter, system-ui, sans-serif',
+                            size: 12
+                        }
+                    }
+                },
+                tooltip: {
+                    backgroundColor: isDarkMode ? 'rgba(17, 24, 39, 0.9)' : 'rgba(255, 255, 255, 0.9)',
+                    titleColor: isDarkMode ? '#e5e7eb' : '#111827',
+                    bodyColor: isDarkMode ? '#e5e7eb' : '#111827',
+                    borderColor: isDarkMode ? 'rgba(75, 85, 99, 0.3)' : 'rgba(209, 213, 219, 0.3)',
+                    borderWidth: 1,
+                    padding: 12,
+                    cornerRadius: 8,
+                    displayColors: false,
+                    titleFont: {
+                        family: 'Inter, system-ui, sans-serif',
+                        size: 14,
+                        weight: 'bold'
+                    },
+                    bodyFont: {
+                        family: 'Inter, system-ui, sans-serif',
+                        size: 14
+                    },
+                    callbacks: {
+                        label: function(context) {
+                            return `Congestion: ${(context.raw * 100).toFixed(1)}%`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        display: true,
+                        drawBorder: false,
+                    },
+                    ticks: {
+                        padding: 10
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false,
+                        drawBorder: false
+                    },
+                    ticks: {
+                        padding: 10
+                    }
+                }
+            },
+            animation: {
+                duration: 2000,
+                easing: 'easeOutQuart'
+            }
+        }
+    });
+
+    // Delay Chart with gradient
+    const delayCtx = document.getElementById('delayChart').getContext('2d');
+    const delayGradient = delayCtx.createLinearGradient(0, 0, 0, 400);
+    delayGradient.addColorStop(0, 'rgba(16, 185, 129, 0.4)');
+    delayGradient.addColorStop(1, 'rgba(16, 185, 129, 0.0)');
+    
+    new Chart(delayCtx, {
+        type: 'line',
+        data: {
+            labels: months,
+            datasets: [{
+                label: 'Average Delay (minutes)',
+                data: delayData,
+                fill: true,
+                backgroundColor: delayGradient,
+                borderColor: 'rgba(16, 185, 129, 1)',
+                borderWidth: 3,
+                tension: 0.4,
+                pointBackgroundColor: 'rgba(16, 185, 129, 1)',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2,
+                pointRadius: 6,
+                pointHoverRadius: 8,
+                pointHoverBackgroundColor: 'rgba(16, 185, 129, 1)',
+                pointHoverBorderColor: '#fff',
+                pointHoverBorderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top',
+                    labels: {
+                        boxWidth: 12,
+                        usePointStyle: true,
+                        pointStyle: 'circle'
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(17, 24, 39, 0.8)',
+                    titleFont: {
+                        size: 13,
+                        weight: 'bold'
+                    },
+                    bodyFont: {
+                        size: 12
+                    },
+                    padding: 10,
+                    cornerRadius: 6,
+                    displayColors: false,
+                    callbacks: {
+                        label: function(context) {
+                            return `Delay: ${context.parsed.y} minutes`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        display: true,
+                        drawBorder: false,
+                    },
+                    ticks: {
+                        padding: 10
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false,
+                        drawBorder: false
+                    },
+                    ticks: {
+                        padding: 10
+                    }
+                }
+            },
+            animation: {
+                duration: 2000,
+                easing: 'easeOutQuart'
+            }
+        }
+    });
+    
+    // Add responsive behavior for dark mode toggle
+    const updateChartColors = function() {
+        const isDarkMode = document.documentElement.classList.contains('dark');
+        Chart.defaults.color = isDarkMode ? 'rgba(255, 255, 255, 0.7)' : 'rgba(75, 85, 99, 0.7)';
+        Chart.defaults.borderColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+        
+        // Force charts to update
+        Chart.instances.forEach(chart => chart.update());
+    };
+    
+    // Listen for theme changes
+    document.getElementById('theme-toggle').addEventListener('click', function() {
+        setTimeout(updateChartColors, 300); // Wait for theme transition
+    });
+    
+    // End of chart initialization
+</script>
+
+<script>
+    // Additional AJAX functionality for prediction form
+    $('#predict-form').submit(function(e) {
+        e.preventDefault();
+        
+        $.ajax({
+            url: '/predict_congestion',
+            type: 'POST',
+            data: $(this).serialize(),
+            success: function(data) {
+                // Handle success response
+                $('#prediction-result').html(`
+                    <div style="background-color: #d1fae5; color: #065f46; padding: 15px; border-radius: 6px;">
+                        <p>${data.message || 'Prediction successful!'}</p>
+                    </div>
+                `).show();
+            },
+            error: function(xhr) {
+                let errorMessage = 'Error predicting congestion.';
+                if (xhr.responseJSON && xhr.responseJSON.route_suggestion) {
+                    errorMessage = xhr.responseJSON.route_suggestion;
+                }
+                $('#prediction-result').html(`
+                    <div style="background-color: #fee2e2; color: #991b1b; padding: 15px; border-radius: 6px;">
+                        <div style="display: flex; align-items: center;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="margin-right: 10px;">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <p>${errorMessage}</p>
+                        </div>
+                    </div>
+                `).show();
+            }
+        });
+    });
+
+    // Table filtering functionality
+    function debounce(func, wait) {
+        let timeout;
+        return function() {
+            const context = this, args = arguments;
+            clearTimeout(timeout);
+            timeout = setTimeout(function() {
+                func.apply(context, args);
+            }, wait);
+        };
+    }
+
+    const performFilter = debounce(function() {
+        const airline = $('#filter-airline').val().toLowerCase();
+        const origin = $('#filter-origin').val().toLowerCase();
+        let visibleCount = 0;
+        
+        $('#flight-table tr').each(function() {
+            const rowAirline = $(this).find('td:eq(1)').text().toLowerCase();
+            const rowOrigin = $(this).find('td:eq(2)').text().toLowerCase();
+            
+            if ((airline === '' || rowAirline.includes(airline)) &&
+                (origin === '' || rowOrigin.includes(origin))) {
+                $(this).show();
+                visibleCount++;
+            } else {
+                $(this).hide();
+            }
+        });
+        
+        // Update visible count
+        $('.card-header-purple div:last-child span').text(visibleCount);
+    }, 300);
+
+    $('#filter-airline, #filter-origin').on('keyup', performFilter);
+    
+    // Table sorting functionality
+    $('th').click(function() {
+        const table = $(this).parents('table').eq(0);
+        const rows = table.find('tr:gt(0)').toArray().sort(comparer($(this).index()));
+        
+        this.asc = !this.asc;
+        if (!this.asc) rows.reverse();
+        
+        for (let i = 0; i < rows.length; i++) {
+            table.append(rows[i]);
+        }
+    });
+
+    function comparer(index) {
+        return function(a, b) {
+            const valA = getCellValue(a, index), valB = getCellValue(b, index);
+            return $.isNumeric(valA) && $.isNumeric(valB) ? valA - valB : valA.toString().localeCompare(valB);
+        };
+    }
+
+    function getCellValue(row, index) {
+        return $(row).children('td').eq(index).text().trim();
+    }
+    
+    // Visualizations data from server
+    const vizData = JSON.parse('{{ viz_data | tojson | safe }}');
+    
+    // Update the congestion chart with real data
+    // We're using the same canvas element, so we need to get the context again
+    const congestionChartCtx = document.getElementById('congestionChart').getContext('2d');
+    const congestionChartGradient = congestionChartCtx.createLinearGradient(0, 0, 0, 400);
+    congestionChartGradient.addColorStop(0, isDarkMode ? 'rgba(59, 130, 246, 0.8)' : 'rgba(59, 130, 246, 0.7)');
+    congestionChartGradient.addColorStop(1, isDarkMode ? 'rgba(79, 70, 229, 0.2)' : 'rgba(59, 130, 246, 0.1)');
+    
+    const congestionChart = new Chart(congestionChartCtx, {
+        type: 'bar',
+        data: {
+            labels: Object.keys(vizData.congestion_by_airport),
+            datasets: [{
+                label: 'Congestion Probability',
+                data: Object.values(vizData.congestion_by_airport),
+                backgroundColor: congestionChartGradient,
+                borderWidth: 0,
+                borderRadius: 6,
+                hoverBackgroundColor: isDarkMode ? 'rgba(96, 165, 250, 0.9)' : 'rgba(37, 99, 235, 0.8)',
+            }]
+        },
+        options: { 
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    labels: {
+                        font: {
+                            family: 'Inter, system-ui, sans-serif',
+                            size: 12
+                        }
+                    }
+                },
+                tooltip: {
+                    backgroundColor: isDarkMode ? 'rgba(17, 24, 39, 0.9)' : 'rgba(255, 255, 255, 0.9)',
+                    titleColor: isDarkMode ? '#e5e7eb' : '#111827',
+                    bodyColor: isDarkMode ? '#e5e7eb' : '#111827',
+                    borderColor: isDarkMode ? 'rgba(75, 85, 99, 0.3)' : 'rgba(209, 213, 219, 0.3)',
+                    borderWidth: 1,
+                    padding: 12,
+                    cornerRadius: 8,
+                    displayColors: false,
+                    titleFont: {
+                        family: 'Inter, system-ui, sans-serif',
+                        size: 14,
+                        weight: 'bold'
+                    },
+                    bodyFont: {
+                        family: 'Inter, system-ui, sans-serif',
+                        size: 14
+                    },
+                    callbacks: {
+                        label: function(context) {
+                            return `Congestion: ${(context.raw * 100).toFixed(1)}%`;
+                        }
+                    }
+                }
+            },
+            scales: { 
+                y: { 
+                    beginAtZero: true,
+                    grid: {
+                        color: gridColor
+                    },
+                    ticks: {
+                        font: {
+                            family: 'Inter, system-ui, sans-serif'
+                        },
+                        callback: function(value) {
+                            return (value * 100).toFixed(0) + '%';
+                        }
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    },
+                    ticks: {
+                        font: {
+                            family: 'Inter, system-ui, sans-serif'
+                        }
+                    }
+                }
+            },
+            animation: {
+                duration: 2000,
+                easing: 'easeOutQuart'
+            }
+        }
+    });
+    } catch (e) {
+        console.error("Error creating congestion chart:", e);
+    }
+
+    // Create gradient for delay chart
+    let delayChartCtx, delayChartGradient, delayChart;
+    
+    try {
+        const delayChartElement = document.getElementById('delayChart');
+        if (!delayChartElement) {
+            console.error("Delay chart element not found");
+            throw new Error("Delay chart element not found");
+        }
+        
+        delayChartCtx = delayChartElement.getContext('2d');
+        delayChartGradient = delayChartCtx.createLinearGradient(0, 0, 0, 400);
+        delayChartGradient.addColorStop(0, isDarkMode ? 'rgba(239, 68, 68, 0.8)' : 'rgba(239, 68, 68, 0.7)');
+        delayChartGradient.addColorStop(1, isDarkMode ? 'rgba(239, 68, 68, 0.2)' : 'rgba(239, 68, 68, 0.1)');
+        
+        delayChart = new Chart(delayChartCtx, {
+        type: 'line',
+        data: {
+            labels: Object.keys(vizData.delay_by_month),
+            datasets: [{
+                label: 'Average Delay (min)',
+                data: Object.values(vizData.delay_by_month),
+                borderColor: isDarkMode ? 'rgba(248, 113, 113, 1)' : 'rgba(220, 38, 38, 1)',
+                backgroundColor: delayChartGradient,
+                fill: true,
+                tension: 0.4,
+                borderWidth: 3,
+                pointBackgroundColor: isDarkMode ? 'rgba(248, 113, 113, 1)' : 'rgba(220, 38, 38, 1)',
+                pointBorderColor: isDarkMode ? '#1f2937' : '#ffffff',
+                pointBorderWidth: 2,
+                pointRadius: 5,
+                pointHoverRadius: 8,
+                pointHoverBackgroundColor: isDarkMode ? '#ffffff' : '#ef4444',
+                pointHoverBorderColor: isDarkMode ? '#ef4444' : '#ffffff',
+                pointHoverBorderWidth: 2
+            }]
+        },
+        options: { 
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    labels: {
+                        font: {
+                            family: 'Inter, system-ui, sans-serif',
+                            size: 12
+                        }
+                    }
+                },
+                tooltip: {
+                    backgroundColor: isDarkMode ? 'rgba(17, 24, 39, 0.9)' : 'rgba(255, 255, 255, 0.9)',
+                    titleColor: isDarkMode ? '#e5e7eb' : '#111827',
+                    bodyColor: isDarkMode ? '#e5e7eb' : '#111827',
+                    borderColor: isDarkMode ? 'rgba(75, 85, 99, 0.3)' : 'rgba(209, 213, 219, 0.3)',
+                    borderWidth: 1,
+                    padding: 12,
+                    cornerRadius: 8,
+                    displayColors: false,
+                    titleFont: {
+                        family: 'Inter, system-ui, sans-serif',
+                        size: 14,
+                        weight: 'bold'
+                    },
+                    bodyFont: {
+                        family: 'Inter, system-ui, sans-serif',
+                        size: 14
+                    },
+                    callbacks: {
+                        label: function(context) {
+                            return `Delay: ${context.raw.toFixed(1)} minutes`;
+                        }
+                    }
+                }
+            },
+            scales: { 
+                y: { 
+                    beginAtZero: true,
+                    grid: {
+                        color: gridColor
+                    },
+                    ticks: {
+                        font: {
+                            family: 'Inter, system-ui, sans-serif'
+                        }
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    },
+                    ticks: {
+                        font: {
+                            family: 'Inter, system-ui, sans-serif'
+                        }
+                    }
+                }
+            },
+            animation: {
+                duration: 2000,
+                easing: 'easeOutQuart'
+            }
+        }
+    });
+    } catch (e) {
+        console.error("Error creating delay chart:", e);
+    }
+    
+    // Update charts when theme changes
+    document.getElementById('theme-toggle')?.addEventListener('click', function() {
+        setTimeout(() => {
+            try {
+                if (congestionChart) congestionChart.destroy();
+                if (delayChart) delayChart.destroy();
+            
+                // Re-initialize charts with new theme
+                const isDarkMode = document.documentElement.classList.contains('dark');
+                
+                // Update chart colors
+                Chart.defaults.color = isDarkMode ? '#e5e7eb' : '#374151';
+                Chart.defaults.borderColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+                
+                // Recreate congestion chart
+                const congestionChartElement = document.getElementById('congestionChart');
+                if (congestionChartElement) {
+                    const newCongestionCtx = congestionChartElement.getContext('2d');
+                    const newCongestionGradient = newCongestionCtx.createLinearGradient(0, 0, 0, 400);
+                    newCongestionGradient.addColorStop(0, isDarkMode ? 'rgba(59, 130, 246, 0.8)' : 'rgba(59, 130, 246, 0.7)');
+                    newCongestionGradient.addColorStop(1, isDarkMode ? 'rgba(79, 70, 229, 0.2)' : 'rgba(59, 130, 246, 0.1)');
+                    
+                    window.congestionChart = new Chart(newCongestionCtx, {
+                        type: 'bar',
+                        data: {
+                            labels: Object.keys(vizData.congestion_by_airport),
+                            datasets: [{
+                                label: 'Congestion Probability',
+                                data: Object.values(vizData.congestion_by_airport),
+                                backgroundColor: newCongestionGradient,
+                                borderWidth: 0,
+                                borderRadius: 6,
+                                hoverBackgroundColor: isDarkMode ? 'rgba(96, 165, 250, 0.9)' : 'rgba(37, 99, 235, 0.8)',
+                            }]
+                        },
+                        options: congestionChart.options
+                    });
+                }
+                
+                // Recreate delay chart
+                const delayChartElement = document.getElementById('delayChart');
+                if (delayChartElement) {
+                    const newDelayCtx = delayChartElement.getContext('2d');
+                    const newDelayGradient = newDelayCtx.createLinearGradient(0, 0, 0, 400);
+                    newDelayGradient.addColorStop(0, isDarkMode ? 'rgba(239, 68, 68, 0.8)' : 'rgba(239, 68, 68, 0.7)');
+                    newDelayGradient.addColorStop(1, isDarkMode ? 'rgba(239, 68, 68, 0.2)' : 'rgba(239, 68, 68, 0.1)');
+                    
+                    window.delayChart = new Chart(newDelayCtx, {
+                        type: 'line',
+                        data: {
+                            labels: Object.keys(vizData.delay_by_month),
+                            datasets: [{
+                                label: 'Average Delay (min)',
+                                data: Object.values(vizData.delay_by_month),
+                                borderColor: isDarkMode ? 'rgba(248, 113, 113, 1)' : 'rgba(220, 38, 38, 1)',
+                                backgroundColor: newDelayGradient,
+                                fill: true,
+                                tension: 0.4,
+                                borderWidth: 3,
+                                pointBackgroundColor: isDarkMode ? 'rgba(248, 113, 113, 1)' : 'rgba(220, 38, 38, 1)',
+                                pointBorderColor: isDarkMode ? '#1f2937' : '#ffffff',
+                                pointBorderWidth: 2,
+                                pointRadius: 5,
+                                pointHoverRadius: 8,
+                                pointHoverBackgroundColor: isDarkMode ? '#ffffff' : '#ef4444',
+                                pointHoverBorderColor: isDarkMode ? '#ef4444' : '#ffffff',
+                                pointHoverBorderWidth: 2
+                            }]
+                        },
+                        options: delayChart.options
+                    });
+                }
+                
+                } catch (e) {
+                    console.error("Error recreating charts after theme change:", e);
+                }
+            }, 300); // Small delay to allow theme transition
+    });
+</script>
+{% endblock scripts %}
