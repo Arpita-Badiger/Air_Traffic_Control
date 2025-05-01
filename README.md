@@ -79,7 +79,7 @@ This system analyzes flight data to predict congestion patterns and provide alte
 
 2. Open your browser and navigate to:
    ```
-   http://127.0.0.1:5001
+   http://127.0.0.1:5002
    ```
 
 ## Project Structure
@@ -135,7 +135,7 @@ Features used for prediction include:
 - **Database Issues**: If the database doesn't initialize properly, delete `air_traffic.db` and restart the application.
 - **CSS Not Loading**: Run the Tailwind build command again to regenerate CSS.
 - **Prediction Errors**: Ensure the CSV dataset is properly formatted and contains all required columns.
-- **Port Conflicts**: If port 5001 is in use, modify the port number in `air_traffic_system.py`.
+- **Port Conflicts**: If port 5002 is in use, modify the port number in `air_traffic_system.py`.
 
 ## Future Enhancements
 
@@ -158,6 +158,3 @@ MIT License
 
 - Dataset based on Indian flight patterns
 - Inspired by the need for smarter air traffic management systems
-"@
-
-Set-Content -Path "README.md" -Value $content
